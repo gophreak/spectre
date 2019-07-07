@@ -2,10 +2,11 @@
 
 namespace Spectre;
 
+use DateTime;
 use Exception;
 
 /**
- * Converter class for converting a record into a person
+ * Converter class for converting a record into a person record
  */
 class Converter
 {
@@ -30,19 +31,59 @@ class Converter
     ];
 
     /**
+     * Reads records from a CSV file and returns back an array of `PERSON`.
+     *
+     * @param string $filePath
+     *
+     * @return array
+     * @throws Exception
+     */
+    public function readFromCSV(string $filePath): array
+    {
+        if (!file_exists($filePath)) {
+            throw new Exception('File not found');
+        }
+
+        $persons = [];
+
+        $csvFile = fopen($filePath, 'r');
+        while(!feof($csvFile)) {
+            $row = fgetcsv($csvFile);
+            foreach ($row as $record) {
+                try {
+                    $person = $this->parseRecord($record);
+                    // convert a flattened person record into an array of the same
+                    if (array_key_exists('title', $person)) {
+                        $person = [$person];
+                    }
+
+                    $persons = array_merge($persons, $person);
+                } catch (Exception $exception) {
+                    // log the message so we can see what happened...
+                    echo (new DateTime())->format('Y-m-d\TH:i:s') . ': ' . $exception->getMessage() . PHP_EOL;
+                }
+            }
+        }
+        fclose($csvFile);
+
+        return $persons;
+    }
+
+    /**
      * Parse the record string of a given record, and return an assoc array of a person.
      *
      * @param string $record
      *
      * @return array
      */
-    public function parseRecord(string $record): array
+    protected function parseRecord(string $record): array
     {
-        $parts = explode(' ', $record);
+        $record = trim($record);
+        if (strlen($record) === 0) {
+            return [];
+        }
 
-        $person = $this->parseParts($parts);
-
-        return $person;
+        return $this->parseParts(explode(' ', $record));
     }
 
     /**
@@ -58,7 +99,7 @@ class Converter
         $numParts = count($parts);
         // Title and Surname must be set!
         if ($numParts < 2) {
-            throw new Exception('Not enough parts');
+            throw new Exception('Not enough parts: '. implode(' ', $parts));
         }
 
         // more than one person
@@ -72,7 +113,7 @@ class Converter
 
         // we know too much!
         if ($numParts > 3) {
-            throw new Exception('Too many parts');
+            throw new Exception('Too many parts: '. implode(' ', $parts));
         }
 
         $person = self::PERSON;
@@ -85,6 +126,7 @@ class Converter
         }
 
         list($title, $initialName, $lastName) = $parts;
+
         $person[self::KEY_TITLE] = $title;
         $person[self::KEY_LAST_NAME] = $lastName;
 
@@ -112,6 +154,12 @@ class Converter
         // "Mr and Mrs Smith", for example...
         if (count($part1) == 1 && count($part2) == 2) {
             $part1[] = $part2[1];
+        } elseif (count($part1) == 1 && count($part2) == 3) {
+            // It might be better to not do this? However, we can make the assumption that Mr and Mrs John Smith is
+            // actually Mr John Smith and Mrs Smith
+            $part1[] = $part2[1];
+            $part1[] = $part2[2];
+            $part2 = [$part2[0], $part2[2]];
         }
 
         return [$this->parseParts($part1), $this->parseParts($part2)];
