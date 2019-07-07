@@ -1,0 +1,22 @@
+{
+  "name": "Spectre Test",
+  "description": "PHP Test for Spectre interview",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "Raymond Jones",
+      "email": "raymond@raymondjones.co.uk"
+    }
+  ],
+  "require": {
+    "php": "^7.2"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^8.2.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "Spectre\\": "src/"
+    }
+  }
+}
