@@ -26,3 +26,12 @@ and that we do not know the first name of the second person, giving us `Mr John 
 
 This application was written with the support of PHP version 7.2 and is not guaranteed to 
 work under this version.
+
+## Future improvements
+
+It would have been better to have split the reading of CSV into another class, so as to allow
+the responsibility of the Converter to simply convert.
+
+It would have been better to use custom Exceptions, rather than the generic one.
+
+Logging could have been done using monolog rather than stdout.
